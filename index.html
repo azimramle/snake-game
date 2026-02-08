@@ -3,99 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Snake</title>
+    <title>Snake: Reloaded</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); /* Deep space blue */
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            font-family: 'Press Start 2P', cursive; /* Retro Font */
+            font-family: 'Press Start 2P', cursive;
             color: white;
             touch-action: manipulation;
         }
 
         h1 {
             margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 2rem;
-            color: #00ffcc; /* Neon Cyan */
-            text-shadow: 4px 4px #ff00de; /* Neon Pink Shadow */
-            letter-spacing: 5px;
+            margin-bottom: 10px;
+            font-size: 1.5rem; /* Slightly smaller to fit mobile */
+            color: #00ffcc;
+            text-shadow: 4px 4px #ff00de;
+            text-align: center;
+            line-height: 1.5;
         }
 
         .game-container {
             position: relative;
-            padding: 10px;
+            padding: 4px; /* Thinner padding */
             background: rgba(0, 0, 0, 0.5);
             border-radius: 15px;
             box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
         }
 
         canvas {
-            border: 4px solid #ffffff;
+            border: 2px solid #ffffff;
             border-radius: 5px;
             background-color: #000;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 1);
             display: block;
-            max-width: 90vw; /* Responsive width */
+            max-width: 90vw;
+            max-height: 55vh; /* Saved space for buttons */
         }
 
-        /* Scoreboard Styling */
-        .score-container {
+        .info-panel {
             display: flex;
             justify-content: space-between;
             width: 100%;
-            margin-top: 15px;
-            font-size: 0.8rem;
+            margin-top: 10px;
+            font-size: 0.7rem;
             color: #fff;
         }
 
-        .score-box {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* --- NEW: Mode Buttons --- */
+        .mode-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
-        /* Mobile Controls Styling */
+        .mode-btn {
+            background: transparent;
+            border: 2px solid #555;
+            color: #777;
+            padding: 8px 12px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .mode-btn.active {
+            border-color: #ff00de; /* Neon Pink border */
+            color: #ff00de;
+            box-shadow: 0 0 10px #ff00de;
+        }
+
+        /* --- UPDATED: Tighter D-Pad --- */
         .controls {
-            margin-top: 25px;
+            margin-top: 15px;
             display: grid;
             grid-template-areas: 
                 ". up ."
                 "left . right"
                 ". down .";
-            gap: 15px;
+            gap: 4px; /* Reduced from 15px to 4px for easier tapping */
         }
 
         .btn {
             background: linear-gradient(145deg, #2a2a40, #1a1a2e);
             color: #00ffcc;
             border: 2px solid #00ffcc;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%; /* Make them circular */
-            font-size: 1.5rem;
+            width: 55px; /* Slightly smaller buttons */
+            height: 55px;
+            border-radius: 10px; /* Squircle shape feels better for D-pads */
+            font-size: 1.2rem;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 4px 0px rgba(0, 255, 204, 0.4); /* 3D effect */
             display: flex;
             align-items: center;
             justify-content: center;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         .btn:active {
-            transform: scale(0.95);
+            transform: translateY(4px); /* Button presses down */
+            box-shadow: none;
             background: #00ffcc;
             color: #000;
-            box-shadow: 0 0 10px #00ffcc;
         }
 
         #btnUp { grid-area: up; }
@@ -107,14 +128,20 @@
 </head>
 <body>
 
-    <h1>SNAKE</h1>
+    <h1>SNAKE:<br>RELOADED</h1>
+
+    <div class="mode-container">
+        <button class="mode-btn active" onclick="setMode('normal', this)">NORMAL</button>
+        <button class="mode-btn" onclick="setMode('hard', this)">HARD</button>
+        <button class="mode-btn" onclick="setMode('pro', this)">PRO</button>
+    </div>
     
     <div class="game-container">
         <canvas id="gameCanvas" width="400" height="400"></canvas>
         
-        <div class="score-container">
-            <div class="score-box" id="scoreBoard">SCORE: 0</div>
-            <div class="score-box" id="highScoreBoard">BEST: 0</div>
+        <div class="info-panel">
+            <div>SCORE: <span id="scoreVal">0</span></div>
+            <div>BEST: <span id="highScoreVal">0</span></div>
         </div>
     </div>
 
@@ -134,7 +161,7 @@
         
         let score = 0;
         let highScore = localStorage.getItem("snakeHighScore") || 0;
-        document.getElementById("highScoreBoard").innerText = "BEST: " + highScore;
+        document.getElementById("highScoreVal").innerText = highScore;
 
         let velocityX = 0; 
         let velocityY = 0;
@@ -142,7 +169,9 @@
         let foodX = 15;
         let foodY = 15;
         
-        let gameSpeed = 100;
+        // Mode Settings
+        let baseSpeed = 100; // Default Normal
+        let gameSpeed = baseSpeed;
         let gameInterval;
 
         // Start Game
@@ -151,6 +180,23 @@
         function gameLoop() {
             update();
             draw();
+        }
+
+        function setMode(mode, btnElement) {
+            // Update Visuals
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // Set Speed
+            if (mode === 'normal') baseSpeed = 100;
+            if (mode === 'hard') baseSpeed = 70;
+            if (mode === 'pro') baseSpeed = 40; // Super fast
+
+            // Restart Game with new speed
+            resetGame();
+            
+            // Refocus canvas so keyboard works immediately
+            canvas.focus();
         }
 
         function update() {
@@ -175,18 +221,19 @@
             // Eating Food
             if (head.x === foodX && head.y === foodY) {
                 score++;
-                document.getElementById("scoreBoard").innerText = "SCORE: " + score;
+                document.getElementById("scoreVal").innerText = score;
 
                 if (score > highScore) {
                     highScore = score;
                     localStorage.setItem("snakeHighScore", highScore);
-                    document.getElementById("highScoreBoard").innerText = "BEST: " + highScore;
+                    document.getElementById("highScoreVal").innerText = highScore;
                 }
                 
-                // Speed Increase
-                if (score % 2 === 0 && gameSpeed > 50) {
+                // Dynamic Speed: Increase relative to base speed
+                // Cap the speed so it doesn't become impossible (limit 25ms)
+                if (score % 2 === 0 && gameSpeed > 25) {
                     clearInterval(gameInterval);
-                    gameSpeed -= 5;
+                    gameSpeed -= 2; 
                     gameInterval = setInterval(gameLoop, gameSpeed);
                 }
 
@@ -197,20 +244,20 @@
         }
 
         function draw() {
-            // Draw Background
+            // Background
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Snake (Neon Cyan with Shadow)
+            // Snake
             ctx.fillStyle = "#00ffcc";
-            ctx.shadowBlur = 10; // Glowing effect
+            ctx.shadowBlur = 10;
             ctx.shadowColor = "#00ffcc";
             for (let i = 0; i < snake.length; i++) {
                 ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
             }
-            ctx.shadowBlur = 0; // Reset shadow so other things don't glow
+            ctx.shadowBlur = 0;
 
-            // Draw Food (Neon Pink)
+            // Food
             ctx.fillStyle = "#ff00de";
             ctx.shadowBlur = 10;
             ctx.shadowColor = "#ff00de";
@@ -228,10 +275,13 @@
             velocityX = 0;
             velocityY = 0;
             score = 0;
-            document.getElementById("scoreBoard").innerText = "SCORE: 0";
+            document.getElementById("scoreVal").innerText = "0";
+            
+            // Reset to the selected mode's base speed
             clearInterval(gameInterval);
-            gameSpeed = 100;
+            gameSpeed = baseSpeed;
             gameInterval = setInterval(gameLoop, gameSpeed);
+            
             placeFood();
         }
 
@@ -239,10 +289,10 @@
 
         function keyDownEvent(e) {
             switch(e.keyCode) {
-                case 37: if (velocityX !== 1) { velocityX = -1; velocityY = 0; } break; // Left
-                case 38: if (velocityY !== 1) { velocityX = 0; velocityY = -1; } break; // Up
-                case 39: if (velocityX !== -1) { velocityX = 1; velocityY = 0; } break; // Right
-                case 40: if (velocityY !== -1) { velocityX = 0; velocityY = 1; } break; // Down
+                case 37: if (velocityX !== 1) { velocityX = -1; velocityY = 0; } break; 
+                case 38: if (velocityY !== 1) { velocityX = 0; velocityY = -1; } break; 
+                case 39: if (velocityX !== -1) { velocityX = 1; velocityY = 0; } break; 
+                case 40: if (velocityY !== -1) { velocityX = 0; velocityY = 1; } break; 
             }
         }
 
