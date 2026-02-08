@@ -3,67 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Snake</title>
+    <title>Neon Snake</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #202020;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); /* Deep space blue */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Press Start 2P', cursive; /* Retro Font */
             color: white;
-            touch-action: manipulation; /* Prevents zooming on double tap */
+            touch-action: manipulation;
         }
 
         h1 {
             margin-top: 0;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px #000;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            color: #00ffcc; /* Neon Cyan */
+            text-shadow: 4px 4px #ff00de; /* Neon Pink Shadow */
+            letter-spacing: 5px;
+        }
+
+        .game-container {
+            position: relative;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
         }
 
         canvas {
-            border: 2px solid #4CAF50;
-            box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+            border: 4px solid #ffffff;
+            border-radius: 5px;
             background-color: #000;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 1);
+            display: block;
             max-width: 90vw; /* Responsive width */
-            max-height: 60vh; /* Keep space for buttons */
         }
 
         /* Scoreboard Styling */
         .score-container {
-            margin-top: 10px;
             display: flex;
-            gap: 20px;
-            font-size: 1.2rem;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: #fff;
+        }
+
+        .score-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         /* Mobile Controls Styling */
         .controls {
-            margin-top: 20px;
+            margin-top: 25px;
             display: grid;
             grid-template-areas: 
                 ". up ."
                 "left . right"
                 ". down .";
-            gap: 10px;
+            gap: 15px;
         }
 
         .btn {
-            background-color: #333;
-            color: white;
-            border: 2px solid #4CAF50;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 1.2rem;
+            background: linear-gradient(145deg, #2a2a40, #1a1a2e);
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%; /* Make them circular */
+            font-size: 1.5rem;
             cursor: pointer;
-            user-select: none; /* Prevents highlighting text */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .btn:active {
-            background-color: #4CAF50;
+            transform: scale(0.95);
+            background: #00ffcc;
+            color: #000;
+            box-shadow: 0 0 10px #00ffcc;
         }
 
         #btnUp { grid-area: up; }
@@ -76,11 +108,14 @@
 <body>
 
     <h1>SNAKE</h1>
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
     
-    <div class="score-container">
-        <div id="scoreBoard">Score: 0</div>
-        <div id="highScoreBoard">High Score: 0</div>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        
+        <div class="score-container">
+            <div class="score-box" id="scoreBoard">SCORE: 0</div>
+            <div class="score-box" id="highScoreBoard">BEST: 0</div>
+        </div>
     </div>
 
     <div class="controls">
@@ -99,7 +134,7 @@
         
         let score = 0;
         let highScore = localStorage.getItem("snakeHighScore") || 0;
-        document.getElementById("highScoreBoard").innerText = "High Score: " + highScore;
+        document.getElementById("highScoreBoard").innerText = "BEST: " + highScore;
 
         let velocityX = 0; 
         let velocityY = 0;
@@ -107,11 +142,10 @@
         let foodX = 15;
         let foodY = 15;
         
-        // NEW: Game Speed Variables
         let gameSpeed = 100;
         let gameInterval;
 
-        // Start the game loop
+        // Start Game
         gameInterval = setInterval(gameLoop, gameSpeed);
 
         function gameLoop() {
@@ -141,21 +175,19 @@
             // Eating Food
             if (head.x === foodX && head.y === foodY) {
                 score++;
-                document.getElementById("scoreBoard").innerText = "Score: " + score;
+                document.getElementById("scoreBoard").innerText = "SCORE: " + score;
 
-                // High Score Check
                 if (score > highScore) {
                     highScore = score;
                     localStorage.setItem("snakeHighScore", highScore);
-                    document.getElementById("highScoreBoard").innerText = "High Score: " + highScore;
+                    document.getElementById("highScoreBoard").innerText = "BEST: " + highScore;
                 }
                 
-                // NEW: Increase Speed
-                // Every 2 points, decrease interval time by 5ms (Max speed 50ms)
+                // Speed Increase
                 if (score % 2 === 0 && gameSpeed > 50) {
-                    clearInterval(gameInterval); // Stop the old loop
-                    gameSpeed -= 5; // Make it faster
-                    gameInterval = setInterval(gameLoop, gameSpeed); // Start new loop
+                    clearInterval(gameInterval);
+                    gameSpeed -= 5;
+                    gameInterval = setInterval(gameLoop, gameSpeed);
                 }
 
                 placeFood();
@@ -165,16 +197,25 @@
         }
 
         function draw() {
-            ctx.fillStyle = "black";
+            // Draw Background
+            ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = "lime";
+            // Draw Snake (Neon Cyan with Shadow)
+            ctx.fillStyle = "#00ffcc";
+            ctx.shadowBlur = 10; // Glowing effect
+            ctx.shadowColor = "#00ffcc";
             for (let i = 0; i < snake.length; i++) {
                 ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
             }
+            ctx.shadowBlur = 0; // Reset shadow so other things don't glow
 
-            ctx.fillStyle = "red";
+            // Draw Food (Neon Pink)
+            ctx.fillStyle = "#ff00de";
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "#ff00de";
             ctx.fillRect(foodX * gridSize, foodY * gridSize, gridSize - 2, gridSize - 2);
+            ctx.shadowBlur = 0;
         }
 
         function placeFood() {
@@ -187,17 +228,13 @@
             velocityX = 0;
             velocityY = 0;
             score = 0;
-            document.getElementById("scoreBoard").innerText = "Score: 0";
-            
-            // NEW: Reset Speed
+            document.getElementById("scoreBoard").innerText = "SCORE: 0";
             clearInterval(gameInterval);
             gameSpeed = 100;
             gameInterval = setInterval(gameLoop, gameSpeed);
-            
             placeFood();
         }
 
-        // Keyboard Controls
         document.addEventListener("keydown", keyDownEvent);
 
         function keyDownEvent(e) {
@@ -209,7 +246,7 @@
             }
         }
 
-        // NEW: Mobile Button Controls
+        // Mobile Controls
         document.getElementById("btnLeft").addEventListener("click", () => {
             if (velocityX !== 1) { velocityX = -1; velocityY = 0; }
         });
