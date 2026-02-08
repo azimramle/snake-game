@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Snake</title>
+    <style>
+        /* 1. CSS: The Visuals */
+        body {
+            background-color: #202020; /* Dark gray background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: white;
+        }
+
+        h1 {
+            margin-top: 0;
+            text-shadow: 2px 2px #000;
+        }
+
+        canvas {
+            border: 2px solid #4CAF50; /* Retro green border */
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.5); /* Glowing effect */
+            background-color: #000;
+        }
+
+        #scoreBoard {
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>SNAKE</h1>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="scoreBoard">Score: 0</div>
+
+    <script>
+        // 2. JavaScript: The Logic
+
+        // --- Configuration ---
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d"); // The "brush" we use to draw
+        
+        const gridSize = 20; // Size of one square (tile)
+        const tileCount = canvas.width / gridSize; // Total tiles (20x20 grid)
+        
+        // --- Game State ---
+        let score = 0;
+        
+        // Velocity (X and Y speed). 
+        // x=1 means moving right, x=-1 means left. y=1 means down.
+        let velocityX = 0; 
+        let velocityY = 0;
+
+        // The Snake: An array of coordinate objects. 
+        // Initial position: Head at (10, 10)
+        let snake = [{x: 10, y: 10}]; 
+        
+        // The Food: Start at a random position
+        let foodX = 15;
+        let foodY = 15;
+
+        // --- The Game Loop ---
+        // We use setInterval to run the game function 10 times per second (100ms)
+        // This creates the "frame rate" feel of the game.
+        setInterval(gameLoop, 100);
+
+        function gameLoop() {
+            update();
+            draw();
+        }
+
+        // --- Update Logic (Math & Movement) ---
+        function update() {
+            // 1. Move the snake head
+            // We create a new head based on current velocity
+            const head = { x: snake[0].x + velocityX, y: snake[0].y + velocityY };
+
+            // 2. Check for Wall Collision (Game Over)
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                resetGame();
+                return;
+            }
+
+            // 3. Check for Self Collision (Game Over)
+            // We loop through the snake body to see if the head hit any part of it
+            for (let i = 0; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    resetGame();
+                    return;
+                }
+            }
+
+            // 4. Add new head to the snake array
+            snake.unshift(head); 
+
+            // 5. Check if we ate food
+            if (head.x === foodX && head.y === foodY) {
+                score++;
+                document.getElementById("scoreBoard").innerText = "Score: " + score;
+                placeFood();
+            } else {
+                // If we didn't eat, remove the tail.
+                // This maintains the snake's length while moving.
+                snake.pop(); 
+            }
+        }
+
+        // --- Draw Logic (Rendering) ---
+        function draw() {
+            // Clear the screen (paint it black)
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the Snake
+            ctx.fillStyle = "lime";
+            for (let i = 0; i < snake.length; i++) {
+                // rect(x, y, width, height)
+                // We multiply by gridSize to convert grid coordinates to pixels
+                ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
+            }
+
+            // Draw the Food
+            ctx.fillStyle = "red";
+            ctx.fillRect(foodX * gridSize, foodY * gridSize, gridSize - 2, gridSize - 2);
+        }
+
+        // --- Helper Functions ---
+        function placeFood() {
+            foodX = Math.floor(Math.random() * tileCount);
+            foodY = Math.floor(Math.random() * tileCount);
+            
+            // Optional: Ensure food doesn't spawn *inside* the snake body
+            // (Skipped here for simplicity, but good to add later)
+        }
+
+        function resetGame() {
+            // Reset variables to initial state
+            snake = [{x: 10, y: 10}];
+            velocityX = 0;
+            velocityY = 0;
+            score = 0;
+            document.getElementById("scoreBoard").innerText = "Score: 0";
+            placeFood();
+        }
+
+        // --- Input Handling ---
+        document.addEventListener("keydown", keyDownEvent);
+
+        function keyDownEvent(e) {
+            // Arrow keys control velocity
+            // We also prevent reversing direction instantly (can't go Left if moving Right)
+            switch(e.keyCode) {
+                case 37: // Left
+                    if (velocityX !== 1) { velocityX = -1; velocityY = 0; }
+                    break;
+                case 38: // Up
+                    if (velocityY !== 1) { velocityX = 0; velocityY = -1; }
+                    break;
+                case 39: // Right
+                    if (velocityX !== -1) { velocityX = 1; velocityY = 0; }
+                    break;
+                case 40: // Down
+                    if (velocityY !== -1) { velocityX = 0; velocityY = 1; }
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
