@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Snake</title>
+    <title>Pro Snake</title>
     <style>
         body {
             background-color: #202020;
@@ -15,10 +15,12 @@
             margin: 0;
             font-family: 'Courier New', Courier, monospace;
             color: white;
+            touch-action: manipulation; /* Prevents zooming on double tap */
         }
 
         h1 {
             margin-top: 0;
+            margin-bottom: 10px;
             text-shadow: 2px 2px #000;
         }
 
@@ -26,15 +28,49 @@
             border: 2px solid #4CAF50;
             box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
             background-color: #000;
+            max-width: 90vw; /* Responsive width */
+            max-height: 60vh; /* Keep space for buttons */
         }
 
         /* Scoreboard Styling */
         .score-container {
             margin-top: 10px;
             display: flex;
-            gap: 20px; /* Space between the two scores */
+            gap: 20px;
             font-size: 1.2rem;
         }
+
+        /* Mobile Controls Styling */
+        .controls {
+            margin-top: 20px;
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "left . right"
+                ". down .";
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: #333;
+            color: white;
+            border: 2px solid #4CAF50;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            user-select: none; /* Prevents highlighting text */
+        }
+        
+        .btn:active {
+            background-color: #4CAF50;
+        }
+
+        #btnUp { grid-area: up; }
+        #btnLeft { grid-area: left; }
+        #btnRight { grid-area: right; }
+        #btnDown { grid-area: down; }
+
     </style>
 </head>
 <body>
@@ -47,6 +83,13 @@
         <div id="highScoreBoard">High Score: 0</div>
     </div>
 
+    <div class="controls">
+        <button class="btn" id="btnUp">▲</button>
+        <button class="btn" id="btnLeft">◀</button>
+        <button class="btn" id="btnRight">▶</button>
+        <button class="btn" id="btnDown">▼</button>
+    </div>
+
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
@@ -55,7 +98,6 @@
         const tileCount = canvas.width / gridSize; 
         
         let score = 0;
-        // 1. LOAD HIGH SCORE
         let highScore = localStorage.getItem("snakeHighScore") || 0;
         document.getElementById("highScoreBoard").innerText = "High Score: " + highScore;
 
@@ -64,8 +106,13 @@
         let snake = [{x: 10, y: 10}]; 
         let foodX = 15;
         let foodY = 15;
+        
+        // NEW: Game Speed Variables
+        let gameSpeed = 100;
+        let gameInterval;
 
-        setInterval(gameLoop, 100);
+        // Start the game loop
+        gameInterval = setInterval(gameLoop, gameSpeed);
 
         function gameLoop() {
             update();
@@ -96,11 +143,19 @@
                 score++;
                 document.getElementById("scoreBoard").innerText = "Score: " + score;
 
-                // 2. CHECK & SAVE HIGH SCORE
+                // High Score Check
                 if (score > highScore) {
                     highScore = score;
                     localStorage.setItem("snakeHighScore", highScore);
                     document.getElementById("highScoreBoard").innerText = "High Score: " + highScore;
+                }
+                
+                // NEW: Increase Speed
+                // Every 2 points, decrease interval time by 5ms (Max speed 50ms)
+                if (score % 2 === 0 && gameSpeed > 50) {
+                    clearInterval(gameInterval); // Stop the old loop
+                    gameSpeed -= 5; // Make it faster
+                    gameInterval = setInterval(gameLoop, gameSpeed); // Start new loop
                 }
 
                 placeFood();
@@ -133,20 +188,40 @@
             velocityY = 0;
             score = 0;
             document.getElementById("scoreBoard").innerText = "Score: 0";
-            // Note: We do NOT reset the high score here!
+            
+            // NEW: Reset Speed
+            clearInterval(gameInterval);
+            gameSpeed = 100;
+            gameInterval = setInterval(gameLoop, gameSpeed);
+            
             placeFood();
         }
 
+        // Keyboard Controls
         document.addEventListener("keydown", keyDownEvent);
 
         function keyDownEvent(e) {
             switch(e.keyCode) {
-                case 37: if (velocityX !== 1) { velocityX = -1; velocityY = 0; } break;
-                case 38: if (velocityY !== 1) { velocityX = 0; velocityY = -1; } break;
-                case 39: if (velocityX !== -1) { velocityX = 1; velocityY = 0; } break;
-                case 40: if (velocityY !== -1) { velocityX = 0; velocityY = 1; } break;
+                case 37: if (velocityX !== 1) { velocityX = -1; velocityY = 0; } break; // Left
+                case 38: if (velocityY !== 1) { velocityX = 0; velocityY = -1; } break; // Up
+                case 39: if (velocityX !== -1) { velocityX = 1; velocityY = 0; } break; // Right
+                case 40: if (velocityY !== -1) { velocityX = 0; velocityY = 1; } break; // Down
             }
         }
+
+        // NEW: Mobile Button Controls
+        document.getElementById("btnLeft").addEventListener("click", () => {
+            if (velocityX !== 1) { velocityX = -1; velocityY = 0; }
+        });
+        document.getElementById("btnUp").addEventListener("click", () => {
+            if (velocityY !== 1) { velocityX = 0; velocityY = -1; }
+        });
+        document.getElementById("btnRight").addEventListener("click", () => {
+            if (velocityX !== -1) { velocityX = 1; velocityY = 0; }
+        });
+        document.getElementById("btnDown").addEventListener("click", () => {
+            if (velocityY !== -1) { velocityX = 0; velocityY = 1; }
+        });
     </script>
 </body>
 </html>
